@@ -4,7 +4,6 @@ x-podman:
   in_pod: false
 
 x-api: &api
-  build: ./api
   image: localhost/shortener:latest
   restart: always
   mem_limit: 96m
@@ -22,6 +21,7 @@ x-api: &api
 services:
   api1:
     <<: *api
+    build: ./api
     container_name: api1
     environment: { INSTANCE: api1, CHAOS_ENABLED: "true" }
     networks: { app: { ipv4_address: 10.90.0.11 } }
