@@ -1,0 +1,18 @@
+# Coleta a cada 2s para a subida de memória do cenário de OOM aparecer como
+# curva no Grafana, e não como um degrau.
+global:
+  scrape_interval: 2s
+
+scrape_configs:
+  - job_name: api
+    static_configs:
+      - targets: [api1:8080, api2:8080, api3:8080]
+
+  - job_name: podman
+    static_configs:
+      - targets: [podman-exporter:9882]
+
+  - job_name: node
+    scrape_interval: 10s
+    static_configs:
+      - targets: [node-exporter:9100]

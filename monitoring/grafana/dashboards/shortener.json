@@ -1,0 +1,106 @@
+{
+  "uid": "shortener",
+  "title": "Encurtador: réplicas e falhas",
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "time": { "from": "now-10m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "state-timeline",
+      "title": "Estado das réplicas",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "podman_container_state{name=~\"api.*\"}", "legendFormat": "{{name}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{
+            "type": "value",
+            "options": {
+              "0": { "text": "created", "color": "yellow" },
+              "1": { "text": "initialized", "color": "yellow" },
+              "2": { "text": "running", "color": "green" },
+              "3": { "text": "stopped", "color": "red" },
+              "4": { "text": "paused", "color": "purple" },
+              "5": { "text": "exited", "color": "red" },
+              "7": { "text": "stopping", "color": "orange" }
+            }
+          }]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "state-timeline",
+      "title": "Saúde das réplicas (healthcheck)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "podman_container_health{name=~\"api.*\"}", "legendFormat": "{{name}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{
+            "type": "value",
+            "options": {
+              "-1": { "text": "unknown", "color": "text" },
+              "0": { "text": "healthy", "color": "green" },
+              "1": { "text": "unhealthy", "color": "red" },
+              "2": { "text": "starting", "color": "yellow" }
+            }
+          }]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Memória das réplicas (limite: 96 MB)",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "podman_container_mem_usage_bytes{name=~\"api.*\"}", "legendFormat": "{{name}}" }],
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Hops em memória",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "shortener_hops_in_memory", "legendFormat": "{{instance}}" }],
+      "fieldConfig": { "defaults": { "min": 0 } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requisições por réplica (req/s)",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "refId": "A",
+        "expr": "sum by (instance) (rate(shortener_http_requests_total{route!~\"GET /(metrics|health)\"}[10s]))",
+        "legendFormat": "{{instance}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "reqps", "min": 0 } }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Reinícios (15 min)",
+      "gridPos": { "x": 12, "y": 14, "w": 4, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "changes(podman_container_started_seconds{name=~\"api.*\"}[15m])", "legendFormat": "{{name}}" }],
+      "options": { "orientation": "horizontal" }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Memória da VM",
+      "gridPos": { "x": 16, "y": 14, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes", "legendFormat": "RAM em uso" },
+        { "refId": "B", "expr": "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes", "legendFormat": "swap em uso" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 } }
+    }
+  ]
+}
